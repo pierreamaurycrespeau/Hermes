@@ -1,0 +1,19 @@
+# Render blueprint for the Hermes agent.
+# Commit this file to your GitHub repo root, then in Render choose
+# "New +" -> "Blueprint" and point it at the repo. Render reads this file.
+
+services:
+  - type: web
+    name: hermes-agent
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn hermes_agent:app --bind 0.0.0.0:$PORT --workers 2 --timeout 60
+    healthCheckPath: /health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false          # set this in the Render dashboard (secret)
+      - key: WEBHOOK_SECRET
+        generateValue: true  # Render generates a random secret for you
+      - key: HERMES_MODEL
+        value: claude-sonnet-4-5
