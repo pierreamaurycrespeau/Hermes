@@ -13,7 +13,10 @@ services:
     envVars:
       - key: ANTHROPIC_API_KEY
         sync: false          # set this in the Render dashboard (secret)
-      - key: WEBHOOK_SECRET
-        generateValue: true  # Render generates a random secret for you
+      - key: WEBHOOK_KEYS
+        sync: false          # set a JSON map of source->secret in the dashboard,
+                             # e.g. {"zapier":"...","xavier":"..."}
+      - key: TRUSTED_SOURCES
+        value: zapier        # only Zapier may assert trusted contacts / auto-send
       - key: HERMES_MODEL
         value: claude-sonnet-4-5

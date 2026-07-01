@@ -11,7 +11,7 @@ This guide wires up the flow you described:
 |---|---|
 | **WhatsApp Business Cloud** (Meta) or **Twilio WhatsApp** | Receives/sends messages. Zapier has native apps for both. |
 | **Google Sheet: `Trusted Numbers`** | The allow-list for full automation. One row per phone number. |
-| **`whatsapp_assistant.py`** (this repo) | Your AI endpoint. Zapier calls it; it returns the Decision JSON. |
+| **`hermes_agent.py`** (deployed on Render) | Your AI endpoint. Zapier calls it; it returns the Decision JSON. |
 | **Zapier** | The glue: trigger, sheet lookup, webhook call, branching, sending. |
 | **Slack or Telegram** | Where drafts land with Approve / Reject buttons. |
 | **Airtable (recommended)** | Stores pending drafts so "Reject → regenerate" has state to work with. |
@@ -22,10 +22,11 @@ This guide wires up the flow you described:
 
 ## 1. Deploy the AI endpoint
 
-1. Deploy `whatsapp_assistant.py` to any host (Render / Railway / Fly.io / Cloud Run / Lambda).
-2. Set env vars: `ANTHROPIC_API_KEY` and `WEBHOOK_SECRET` (a random string).
-3. Note the public URL, e.g. `https://your-app.onrender.com/whatsapp`.
-4. Test: `GET /health` should return `{"ok": true}`.
+1. Deploy `hermes_agent.py` to Render (see `DEPLOY.md` for the full walkthrough).
+2. Set env vars: `ANTHROPIC_API_KEY` and `WEBHOOK_KEYS` (e.g. `{"zapier":"<your-key>"}`).
+3. Note the public URL — yours is `https://hermes-6.onrender.com`.
+4. Test: `GET /health` should return
+   `{"ok":true,"model":"...","sources":["zapier"],"trusted_sources":["zapier"]}`.
 
 ---
 
@@ -55,8 +56,8 @@ Store numbers in the same format WhatsApp gives you (E.164, e.g. `+33...`).
 so an empty result becomes `No`.
 
 **Step 4 — Webhooks by Zapier:** *POST*
-- URL: your endpoint `https://.../whatsapp`
-- Header: `X-Webhook-Secret: <your WEBHOOK_SECRET>`
+- URL: `https://hermes-6.onrender.com/webhook`
+- Header: `X-Webhook-Secret: <your zapier key from WEBHOOK_KEYS>`
 - Payload type: JSON
 - Data:
 ```json
@@ -118,7 +119,7 @@ an interactive chat tool plus a tiny bit of stored state.
 ## 5. Prompt changes needed (already reflected in the code)
 
 For the workflow to run, the assistant needs a defined **input contract**.
-The system prompt in `whatsapp_assistant.py` now expects this JSON in:
+The system prompt in `hermes_agent.py` expects this JSON in:
 
 ```json
 {
